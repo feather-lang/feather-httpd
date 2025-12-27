@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -98,6 +99,18 @@ func (s *ServerState) Eval(script string) (feather.Object, error) {
 	s.evalChan <- EvalRequest{Script: script, Response: resp}
 	r := <-resp
 	return r.Result, r.Error
+}
+
+// EvalWithOutput evaluates a script with output directed to the given writer.
+func (s *ServerState) EvalWithOutput(script string, w io.Writer) (feather.Object, error) {
+	ctx := &EvalContext{
+		Output: func(msg string) {
+			fmt.Fprintln(w, msg)
+		},
+	}
+	s.SetEvalContext(ctx)
+	defer s.SetEvalContext(nil)
+	return s.Eval(script)
 }
 
 func (s *ServerState) LoadTemplate(name, content string) error {

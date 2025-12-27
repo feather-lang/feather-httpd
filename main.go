@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	_ "embed"
 	"flag"
 	"fmt"
+	"io"
+	"net"
 	"os"
 	"os/signal"
 	"strings"
@@ -11,6 +14,9 @@ import (
 
 	"github.com/feather-lang/feather"
 )
+
+//go:embed feather-httpd.tcl
+var DefaultConfig string
 
 func main() {
 	scriptFile := flag.String("f", "feather-httpd.tcl", "TCL script file to load")
@@ -52,15 +58,44 @@ func main() {
 		// No REPL - just run the interpreter loop for HTTP requests
 		state.RunInterpreter(interp)
 	} else {
-		// Start interpreter loop in background, run REPL in foreground
+		// Start interpreter loop in background
 		go state.RunInterpreter(interp)
-		runRepl(state)
+		// Start telnet REPL server on port 8081
+		go runTelnetRepl(state)
+		// Wait for shutdown
+		<-state.shutdown
 	}
 }
 
-func runRepl(state *ServerState) {
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print("feather> ")
+func runTelnetRepl(state *ServerState) {
+	listener, err := net.Listen("tcp", "127.0.0.1:8081")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "REPL listen error: %v\n", err)
+		return
+	}
+	fmt.Println("REPL listening on 127.0.0.1:8081")
+
+	// Close listener on shutdown
+	go func() {
+		<-state.shutdown
+		listener.Close()
+	}()
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			return // listener closed
+		}
+		go func(c net.Conn) {
+			defer c.Close()
+			runRepl(state, c, c)
+		}(conn)
+	}
+}
+
+func runRepl(state *ServerState, r io.Reader, w io.Writer) {
+	scanner := bufio.NewScanner(r)
+	fmt.Fprint(w, "feather> ")
 
 	var multiline strings.Builder
 	for scanner.Scan() {
@@ -72,25 +107,25 @@ func runRepl(state *ServerState) {
 
 		input := strings.TrimSpace(multiline.String())
 		if input == "" {
-			fmt.Print("feather> ")
+			fmt.Fprint(w, "feather> ")
 			continue
 		}
 
 		// Check for balanced braces (simple heuristic for multiline)
 		if !isComplete(input) {
-			fmt.Print("       > ")
+			fmt.Fprint(w, "       > ")
 			continue
 		}
 
-		result, err := state.Eval(input)
+		result, err := state.EvalWithOutput(input, w)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			fmt.Fprintf(w, "error: %v\n", err)
 		} else if result.String() != "" {
-			fmt.Println(result.String())
+			fmt.Fprintln(w, result.String())
 		}
 
 		multiline.Reset()
-		fmt.Print("feather> ")
+		fmt.Fprint(w, "feather> ")
 	}
 }
 

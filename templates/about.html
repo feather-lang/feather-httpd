@@ -1,3 +1,35 @@
 {{template "layout" .}}
-{{define "content"}}<h1>About</h1>
-<p>feather-httpd is a TCL-controlled HTTP server. Minimal. Brutal. Effective.</p>{{end}}
+{{define "content"}}<h1>{{.title}}</h1>
+
+<p><a href="https://www.feather-lang.dev">Feather</a> is a lightweight, embeddable scripting language with Tcl-like syntax. It's designed to be easy to integrate into host applications—like this HTTP server.</p>
+
+<h2>Why Feather?</h2>
+<ul>
+    <li><strong>Simple syntax</strong> — commands and arguments, no complex grammar</li>
+    <li><strong>Easy embedding</strong> — expose Go functions directly to scripts</li>
+    <li><strong>Minimal footprint</strong> — small interpreter, fast startup</li>
+    <li><strong>Extensible</strong> — add custom commands for your domain</li>
+</ul>
+
+<h2>Why Embed a Scripting Language?</h2>
+<p>Embedding Feather gives you the best of both worlds:</p>
+<ul>
+    <li><strong>Runtime control</strong> — modify server behavior without restarting</li>
+    <li><strong>Live introspection</strong> — inspect running state like active SSE connections</li>
+    <li><strong>Simple DSL</strong> — configure routes and handlers in a readable script</li>
+    <li><strong>Performance where it matters</strong> — Go handles HTTP, templates, and concurrency</li>
+    <li><strong>User-scriptable</strong> — Feather provides a thin control layer anyone can customize</li>
+</ul>
+
+<h2>About This Demo</h2>
+<p>The Go code provides the infrastructure:</p>
+<ul>
+    <li>HTTP server and routing</li>
+    <li>Template rendering</li>
+    <li>SSE (Server-Sent Events) support</li>
+    <li>Request/response handling primitives</li>
+</ul>
+<p>Feather scripts wire it all together—defining routes, setting headers, rendering templates, and managing real-time connections.</p>
+
+<h2>Learn More</h2>
+<p>Visit <a href="https://www.feather-lang.dev">feather-lang.dev</a> for documentation, tutorials, and the source code.</p>{{end}}

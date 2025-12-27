@@ -1,3 +1,40 @@
 {{template "layout" .}}
-{{define "content"}}<h1>Welcome, {{.name}}!</h1>
-<p>This is the home page. Built with raw power and zero compromise.</p>{{end}}
+{{define "content"}}<h1>Welcome to feather-httpd</h1>
+<p>You're looking at a live HTTP server controlled entirely by <a href="https://www.feather-lang.dev">Feather</a> scripts. Every route, response, and template render you see is defined in a single <code>.tcl</code> file.</p>
+
+<h2>What is this?</h2>
+<p>This demo shows how to embed Feather in a Go application. The HTTP server is written in Go, but all routing logic and request handling is scripted in Feather—a Tcl-like language designed for embedding.</p>
+
+<h2>Why is this cool?</h2>
+<ul>
+    <li><strong>Runtime control</strong> — modify server behavior without restarting</li>
+    <li><strong>Live introspection</strong> — inspect running state like active SSE connections</li>
+    <li><strong>Simple DSL</strong> — configure routes and handlers in a readable script</li>
+    <li><strong>Performance where it matters</strong> — Go handles the heavy lifting</li>
+    <li><strong>User-scriptable</strong> — Feather provides a thin control layer anyone can customize</li>
+</ul>
+
+<h2>Try the REPL</h2>
+<p>Open the <a href="/_repl" target="_blank">web REPL</a> and modify this running server in real-time. Paste this to redefine the About page:</p>
+<pre style="background: #1a1a1a; color: #f5f5dc; padding: 1rem; border: 4px solid #1a1a1a; box-shadow: 8px 8px 0 #6c5ce7; overflow-x: auto; font-family: 'Space Mono', monospace; font-size: 0.85rem; line-height: 1.4;">route GET /about {
+    template respond about title "About - Modified!"
+}</pre>
+<p>Then visit <a href="/about">/about</a> to see your change. You can define new routes, modify existing ones, create templates, and change server behavior—all without restarting.</p>
+
+<h2>Try These Endpoints</h2>
+<p>Visit <a href="/chat">/chat</a> to see a real-time chat room powered by Server-Sent Events. Or try these from your terminal:</p>
+<pre style="background: #1a1a1a; color: #f5f5dc; padding: 1rem; border: 4px solid #1a1a1a; box-shadow: 8px 8px 0 #6c5ce7; overflow-x: auto; font-family: 'Space Mono', monospace; font-size: 0.85rem; line-height: 1.4;"># Dynamic path parameters
+curl http://localhost:8080/hello/YourName
+
+# JSON API response
+curl http://localhost:8080/api/users/42
+
+# Echo request body
+curl -X POST -d '{"message":"hello"}' http://localhost:8080/api/echo
+
+# Query parameters
+curl "http://localhost:8080/search?q=foo&limit=5"</pre>
+
+<h2>Configuration</h2>
+<p>Here's the Feather configuration powering this server:</p>
+<pre style="background: #1a1a1a; color: #f5f5dc; padding: 1rem; border: 4px solid #1a1a1a; box-shadow: 8px 8px 0 #6c5ce7; overflow-x: auto; font-family: 'Space Mono', monospace; font-size: 0.85rem; line-height: 1.4;">{{.config}}</pre>{{end}}

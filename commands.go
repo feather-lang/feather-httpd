@@ -19,7 +19,8 @@ import (
 // Command represents a command or subcommand with help text and optional children
 type Command struct {
 	Name        string
-	Help        string
+	Help        string // short description
+	Long        string // long description
 	Usage       string
 	Subcommands []*Command
 	Handler     func(*feather.Interp, feather.Object, []feather.Object) feather.Result
@@ -46,6 +47,20 @@ func (c *Command) FormatHelp(prefix string) string {
 	for _, sub := range c.Subcommands {
 		subPrefix := prefix + "  "
 		sb.WriteString(sub.FormatHelp(subPrefix))
+	}
+	return sb.String()
+}
+
+// FormatLongHelp returns the long help text
+func (c *Command) FormatLongHelp() string {
+	var sb strings.Builder
+	if c.Usage != "" {
+		sb.WriteString(fmt.Sprintf("Usage: %s\n\n", c.Usage))
+	}
+	if c.Long != "" {
+		sb.WriteString(c.Long)
+	} else if c.Help != "" {
+		sb.WriteString(c.Help)
 	}
 	return sb.String()
 }
@@ -79,6 +94,12 @@ var registry = &CommandRegistry{}
 
 func registerCommands(interp *feather.Interp, state *ServerState) {
 	registerJSONCommand(interp, state)
+
+	// Default config command - returns embedded config
+	interp.Register("default_config", func() string {
+		return DefaultConfig
+	})
+
 	// Route command
 	routeCmd := &Command{
 		Name:  "route",
@@ -690,8 +711,8 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 	// Help command
 	helpCmd := &Command{
 		Name:  "help",
-		Help:  "Show help for commands",
-		Usage: "help ?COMMAND? ?SUBCOMMAND ...?",
+		Help:  "Show or set help for commands",
+		Usage: "help ?COMMAND? | help -for CMD -usage USAGE -short SHORT ?-long LONG?",
 	}
 	registry.Register(helpCmd)
 	interp.RegisterCommand("help", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
@@ -701,6 +722,50 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 			} else {
 				fmt.Println(msg)
 			}
+		}
+
+		// Check for -for flag to set help
+		if len(args) >= 1 && args[0].String() == "-for" {
+			if len(args) < 2 {
+				return feather.Error("help -for: missing command name")
+			}
+			cmdName := args[1].String()
+			var usage, short, long string
+			for j := 2; j < len(args); j++ {
+				switch args[j].String() {
+				case "-usage":
+					j++
+					if j < len(args) {
+						usage = args[j].String()
+					}
+				case "-short":
+					j++
+					if j < len(args) {
+						short = args[j].String()
+					}
+				case "-long":
+					j++
+					if j < len(args) {
+						long = args[j].String()
+					}
+				}
+			}
+			// Find or create command entry
+			c := registry.Find(cmdName)
+			if c == nil {
+				c = &Command{Name: cmdName}
+				registry.Register(c)
+			}
+			if usage != "" {
+				c.Usage = usage
+			}
+			if short != "" {
+				c.Help = short
+			}
+			if long != "" {
+				c.Long = long
+			}
+			return feather.Result{}
 		}
 
 		if len(args) == 0 {
@@ -729,7 +794,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 			c = sub
 		}
 
-		output(c.FormatHelp(""))
+		output(c.FormatLongHelp())
 		return feather.Result{}
 	})
 

@@ -4,11 +4,11 @@
 template loaddir templates
 
 route GET / {
-    template respond home name "World" title "Home"
+    template respond home name "World" title "Home" config [default_config]
 }
 
 route GET /about {
-    template respond about title "About"
+    template respond about title "About Feather"
 }
 
 route GET /hello {
@@ -209,6 +209,38 @@ proc sse {conn event data} {
     respond -to $conn "event: $event\ndata: $data\n\n"
     flush -to $conn
 }
+
+proc respond_to {args} {
+    set client ""
+    set user "REPL"
+    set text ""
+    for {set i 0} {$i < [llength $args]} {incr i} {
+        set arg [lindex $args $i]
+        if {$arg eq "-client"} {
+            incr i
+            set client [lindex $args $i]
+        } elseif {$arg eq "-as"} {
+            incr i
+            set user [lindex $args $i]
+        } else {
+            set text $arg
+        }
+    }
+    set msg [json [dict create user $user text $text] -as {string user string text}]
+    sse $client message $msg
+}
+help -for respond_to \
+    -usage {respond_to -client CLIENT ?-as USER? TEXT} \
+    -short {Send a chat message to a client} \
+    -long {Send a chat message to a connected SSE client.
+
+Arguments:
+  -client CLIENT  The connection handle (from 'connections' command)
+  -as USER        Username to send as (default: REPL)
+  TEXT            The message text to send
+
+Example:
+  respond_to -client abc123 -as Bot "Hello!"}
 
 proc on_chat_disconnect {client} {
     foreach conn [connections] {
