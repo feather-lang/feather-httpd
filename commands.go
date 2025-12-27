@@ -23,7 +23,7 @@ type Command struct {
 	Long        string // long description
 	Usage       string
 	Subcommands []*Command
-	Handler     func(*feather.Interp, feather.Object, []feather.Object) feather.Result
+	Handler     func(*feather.Interp, *feather.Obj, []*feather.Obj) feather.Result
 }
 
 // FindSubcommand looks up a subcommand by name
@@ -119,7 +119,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "respond ?-to HANDLE? BODY",
 	}
 	registry.Register(respondCmd)
-	interp.RegisterCommand("respond", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("respond", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		var ctx *RequestContext
 		bodyIdx := 0
 
@@ -169,7 +169,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "status ?-to HANDLE? CODE",
 	}
 	registry.Register(statusCmd)
-	interp.RegisterCommand("status", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("status", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		var ctx *RequestContext
 		codeIdx := 0
 
@@ -208,7 +208,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "header ?-to HANDLE? NAME VALUE",
 	}
 	registry.Register(headerCmd)
-	interp.RegisterCommand("header", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("header", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		var ctx *RequestContext
 		nameIdx := 0
 
@@ -241,7 +241,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "param NAME",
 	}
 	registry.Register(paramCmd)
-	interp.RegisterCommand("param", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("param", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		ctx := state.GetRequestContext()
 		if ctx == nil {
 			return feather.Error("param: not in request context")
@@ -263,7 +263,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "query NAME ?DEFAULT?",
 	}
 	registry.Register(queryCmd)
-	interp.RegisterCommand("query", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("query", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		ctx := state.GetRequestContext()
 		if ctx == nil {
 			return feather.Error("query: not in request context")
@@ -295,7 +295,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		},
 	}
 	registry.Register(pathCmd)
-	interp.RegisterCommand("path", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("path", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		if len(args) < 1 {
 			return feather.Error("wrong # args: should be \"path subcommand ?arg ...?\"")
 		}
@@ -369,7 +369,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		},
 	}
 	registry.Register(templateCmd)
-	interp.RegisterCommand("template", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("template", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		if len(args) < 1 {
 			return feather.Error("wrong # args: should be \"template subcommand ?arg ...?\"")
 		}
@@ -543,7 +543,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "sendfile PATH",
 	}
 	registry.Register(sendfileCmd)
-	interp.RegisterCommand("sendfile", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("sendfile", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		ctx := state.GetRequestContext()
 		if ctx == nil {
 			return feather.Error("sendfile: not in request context")
@@ -601,7 +601,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		},
 	}
 	registry.Register(requestCmd)
-	interp.RegisterCommand("request", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("request", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		ctx := state.GetRequestContext()
 		if ctx == nil {
 			return feather.Error("request: not in request context")
@@ -638,7 +638,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "puts STRING",
 	}
 	registry.Register(putsCmd)
-	interp.RegisterCommand("puts", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("puts", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		if len(args) < 1 {
 			return feather.Error("wrong # args: should be \"puts string\"")
 		}
@@ -658,7 +658,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "routes",
 	}
 	registry.Register(routesCmd)
-	interp.RegisterCommand("routes", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("routes", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		routes := state.GetRoutes()
 		var items []string
 		for _, r := range routes {
@@ -715,7 +715,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "help ?COMMAND? | help -for CMD -usage USAGE -short SHORT ?-long LONG?",
 	}
 	registry.Register(helpCmd)
-	interp.RegisterCommand("help", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("help", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		output := func(msg string) {
 			if evalCtx := state.GetEvalContext(); evalCtx != nil && evalCtx.Output != nil {
 				evalCtx.Output(msg)
@@ -811,7 +811,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		},
 	}
 	registry.Register(connectionCmd)
-	interp.RegisterCommand("connection", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("connection", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		if len(args) < 1 {
 			return feather.Error("wrong # args: should be \"connection subcommand ?arg ...?\"")
 		}
@@ -886,7 +886,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "connections",
 	}
 	registry.Register(connectionsCmd)
-	interp.RegisterCommand("connections", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("connections", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		handles := state.ListConnections()
 		return feather.OK(handles)
 	})
@@ -898,7 +898,7 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 		Usage: "flush ?-to HANDLE?",
 	}
 	registry.Register(flushCmd)
-	interp.RegisterCommand("flush", func(i *feather.Interp, cmd feather.Object, args []feather.Object) feather.Result {
+	interp.RegisterCommand("flush", func(i *feather.Interp, cmd *feather.Obj, args []*feather.Obj) feather.Result {
 		var ctx *RequestContext
 
 		// Check for -to HANDLE
@@ -923,14 +923,14 @@ func registerCommands(interp *feather.Interp, state *ServerState) {
 	})
 }
 
-func parseTemplateData(args []feather.Object) (map[string]any, error) {
+func parseTemplateData(args []*feather.Obj) (map[string]any, error) {
 	data := make(map[string]any)
 
 	// Single dict argument
 	if len(args) == 1 {
-		dict, err := args[0].Dict()
+		dict, err := feather.AsDict(args[0])
 		if err == nil {
-			for k, v := range dict {
+			for k, v := range dict.Items {
 				data[k] = v.String()
 			}
 			return data, nil

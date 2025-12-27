@@ -52,7 +52,7 @@ type EvalRequest struct {
 
 // EvalResponse contains the result of an eval request
 type EvalResponse struct {
-	Result feather.Object
+	Result *feather.Obj
 	Error  error
 }
 
@@ -94,7 +94,7 @@ func (s *ServerState) RunInterpreter(interp *feather.Interp) {
 
 // Eval sends a script to the interpreter and waits for the result.
 // This is safe to call from any goroutine.
-func (s *ServerState) Eval(script string) (feather.Object, error) {
+func (s *ServerState) Eval(script string) (*feather.Obj, error) {
 	resp := make(chan EvalResponse, 1)
 	s.evalChan <- EvalRequest{Script: script, Response: resp}
 	r := <-resp
@@ -102,7 +102,7 @@ func (s *ServerState) Eval(script string) (feather.Object, error) {
 }
 
 // EvalWithOutput evaluates a script with output directed to the given writer.
-func (s *ServerState) EvalWithOutput(script string, w io.Writer) (feather.Object, error) {
+func (s *ServerState) EvalWithOutput(script string, w io.Writer) (*feather.Obj, error) {
 	ctx := &EvalContext{
 		Output: func(msg string) {
 			fmt.Fprintln(w, msg)

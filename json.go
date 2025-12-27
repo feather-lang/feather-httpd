@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/feather-lang/feather"
-	"github.com/feather-lang/feather/interp"
 )
 
 // SchemaNode represents a node in the JSON schema
@@ -141,15 +140,15 @@ func parseSchemaTokens(tokens []string, pos int) ([]*SchemaNode, int, error) {
 }
 
 // encodeWithSchema encodes a feather dict/list according to the schema
-func encodeWithSchema(obj feather.Object, schema []*SchemaNode) (string, error) {
-	dict, err := obj.Dict()
+func encodeWithSchema(obj *feather.Obj, schema []*SchemaNode) (string, error) {
+	dict, err := feather.AsDict(obj)
 	if err != nil {
 		return "", fmt.Errorf("expected dict for object encoding: %v", err)
 	}
 
 	var parts []string
 	for _, node := range schema {
-		val, ok := dict[node.Name]
+		val, ok := dict.Items[node.Name]
 		if !ok {
 			continue // skip missing fields
 		}
@@ -164,7 +163,7 @@ func encodeWithSchema(obj feather.Object, schema []*SchemaNode) (string, error) 
 	return "{" + strings.Join(parts, ",") + "}", nil
 }
 
-func encodeValue(val feather.Object, node *SchemaNode) (string, error) {
+func encodeValue(val *feather.Obj, node *SchemaNode) (string, error) {
 	switch node.Type {
 	case "string":
 		// JSON-encode the string
@@ -312,10 +311,10 @@ func registerJSONCommand(fi *feather.Interp, state *ServerState) {
 	registry.Register(jsonCmd)
 
 	// Use low-level registration to avoid TCL quoting of JSON output
-	fi.Internal().Register("json", func(i *interp.Interp, cmd interp.FeatherObj, args []interp.FeatherObj) interp.FeatherResult {
+	fi.Internal().Register("json", func(i *feather.InternalInterp, cmd feather.FeatherObj, args []feather.FeatherObj) feather.FeatherResult {
 		if len(args) < 3 {
 			i.SetErrorString("wrong # args: should be \"json value -as schema\" or \"json value -from schema\"")
-			return interp.ResultError
+			return feather.ResultError
 		}
 
 		flag := i.GetString(args[1])
@@ -324,7 +323,7 @@ func registerJSONCommand(fi *feather.Interp, state *ServerState) {
 		schema, err := parseSchema(schemaStr)
 		if err != nil {
 			i.SetErrorString(fmt.Sprintf("json: invalid schema: %v", err))
-			return interp.ResultError
+			return feather.ResultError
 		}
 
 		switch flag {
@@ -333,15 +332,15 @@ func registerJSONCommand(fi *feather.Interp, state *ServerState) {
 			dictVal, _, err := i.GetDict(args[0])
 			if err != nil {
 				i.SetErrorString(fmt.Sprintf("json: expected dict: %v", err))
-				return interp.ResultError
+				return feather.ResultError
 			}
 			enc := newJSONEncoder(i)
 			if err := enc.encodeDict(dictVal, schema); err != nil {
 				i.SetErrorString(fmt.Sprintf("json: encode error: %v", err))
-				return interp.ResultError
+				return feather.ResultError
 			}
 			i.SetResult(i.InternString(enc.String()))
-			return interp.ResultOK
+			return feather.ResultOK
 
 		case "-from":
 			// Decode JSON to TCL dict
@@ -349,7 +348,7 @@ func registerJSONCommand(fi *feather.Interp, state *ServerState) {
 			decoded, err := decodeWithSchema(jsonStr, schema)
 			if err != nil {
 				i.SetErrorString(fmt.Sprintf("json: decode error: %v", err))
-				return interp.ResultError
+				return feather.ResultError
 			}
 			// Build dict result
 			dict := i.NewDict()
@@ -357,22 +356,22 @@ func registerJSONCommand(fi *feather.Interp, state *ServerState) {
 				dict = setDictValue(i, dict, k, v)
 			}
 			i.SetResult(dict)
-			return interp.ResultOK
+			return feather.ResultOK
 
 		default:
 			i.SetErrorString(fmt.Sprintf("json: unknown flag %q (use -as or -from)", flag))
-			return interp.ResultError
+			return feather.ResultError
 		}
 	})
 }
 
 // jsonEncoder writes JSON directly to a buffer based on schema
 type jsonEncoder struct {
-	i   *interp.Interp
+	i   *feather.InternalInterp
 	buf *strings.Builder
 }
 
-func newJSONEncoder(i *interp.Interp) *jsonEncoder {
+func newJSONEncoder(i *feather.InternalInterp) *jsonEncoder {
 	return &jsonEncoder{i: i, buf: &strings.Builder{}}
 }
 
@@ -380,7 +379,7 @@ func (e *jsonEncoder) String() string {
 	return e.buf.String()
 }
 
-func (e *jsonEncoder) encodeDict(dict map[string]interp.FeatherObj, schema []*SchemaNode) error {
+func (e *jsonEncoder) encodeDict(dict map[string]feather.FeatherObj, schema []*SchemaNode) error {
 	e.buf.WriteByte('{')
 	first := true
 	for _, node := range schema {
@@ -403,7 +402,7 @@ func (e *jsonEncoder) encodeDict(dict map[string]interp.FeatherObj, schema []*Sc
 	return nil
 }
 
-func (e *jsonEncoder) encodeValue(val interp.FeatherObj, node *SchemaNode) error {
+func (e *jsonEncoder) encodeValue(val feather.FeatherObj, node *SchemaNode) error {
 	switch node.Type {
 	case "string":
 		s := e.getRawString(val)
@@ -462,7 +461,7 @@ func (e *jsonEncoder) encodeValue(val interp.FeatherObj, node *SchemaNode) error
 }
 
 // getRawString extracts the raw string value, stripping Tcl braces if present
-func (e *jsonEncoder) getRawString(val interp.FeatherObj) string {
+func (e *jsonEncoder) getRawString(val feather.FeatherObj) string {
 	s := e.i.GetString(val)
 	// Strip Tcl braces that wrap strings with spaces
 	if len(s) >= 2 && s[0] == '{' && s[len(s)-1] == '}' {
@@ -471,7 +470,7 @@ func (e *jsonEncoder) getRawString(val interp.FeatherObj) string {
 	return s
 }
 
-func setDictValue(i *interp.Interp, dict interp.FeatherObj, key string, val any) interp.FeatherObj {
+func setDictValue(i *feather.InternalInterp, dict feather.FeatherObj, key string, val any) feather.FeatherObj {
 	switch v := val.(type) {
 	case string:
 		return i.DictSet(dict, key, i.InternString(v))
