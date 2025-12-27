@@ -2,7 +2,7 @@
 
 # feather-httpd
 
-<img src="https://www.feather-lang.dev/logo.png" alt="Feather Logo" height="80" />
+<img src="feather-logo.png" alt="Feather Logo" height="80" />
 &nbsp;&nbsp;&nbsp;&nbsp;
 <img src="https://go.dev/images/gophers/blue.svg" alt="Go Gopher" height="80" />
 
