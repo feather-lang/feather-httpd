@@ -16,9 +16,7 @@ This is a toy HTTP server that uses Feather scripts to handle requests, demonstr
 
 ## See It In Action
 
-https://github.com/user-attachments/assets/demo.webm
-
-<video src="demo.webm" controls width="100%"></video>
+<video src="https://github.com/user-attachments/assets/2b736ff2-487c-461c-8de5-fd7852b3103f" controls noaudio playsinline width="100%"></video>
 
 ---
 
