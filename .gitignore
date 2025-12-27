@@ -1,0 +1,12 @@
+# Compiled binary
+feather-httpd
+
+# IDE/editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
